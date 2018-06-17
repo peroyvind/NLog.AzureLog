@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using NLog.Config;
 using NLog.Targets;
+using NLog.Common;
 
 namespace NLog.AzureLog
 {
@@ -63,12 +64,12 @@ namespace NLog.AzureLog
                 Task<System.Net.Http.HttpResponseMessage> response = client.PostAsync(new Uri(url), httpContent);
 
                 System.Net.Http.HttpContent responseContent = response.Result.Content;
-                string result = responseContent.ReadAsStringAsync().Result;
-                Console.WriteLine("Return Result: " + result);
+                //string result = responseContent.ReadAsStringAsync().Result;
+                //Console.WriteLine("Return Result: " + result);
             }
             catch (Exception excep)
             {
-                Console.WriteLine("API Post Exception: " + excep.Message);
+                InternalLogger.Error("API Post Exception: " + excep.Message);
             }
         }
     }
