@@ -11,8 +11,16 @@ using NLog.Common;
 namespace NLog.AzureLog
 {
     [Target("Azure")]
-    public sealed class Azure: TargetWithLayout
+    public sealed class Azure : TargetWithLayout
     {
+        private static HttpClient _client;
+
+        public Azure()
+        {
+            if(_client == null)
+                _client = new System.Net.Http.HttpClient();
+        }
+
         [RequiredParameter]
         public string CustomerId { get; set; }
         public string SharedKey { get; set; }
@@ -51,17 +59,17 @@ namespace NLog.AzureLog
             try
             {
                 string url = "https://" + CustomerId + ".ods.opinsights.azure.com/api/logs?api-version=2016-04-01";
-
-                System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
-                client.DefaultRequestHeaders.Add("Accept", "application/json");
-                client.DefaultRequestHeaders.Add("Log-Type", LogName);
-                client.DefaultRequestHeaders.Add("Authorization", signature);
-                client.DefaultRequestHeaders.Add("x-ms-date", date);
-                client.DefaultRequestHeaders.Add("time-generated-field", "");
+                
+                _client.DefaultRequestHeaders.Clear();
+                _client.DefaultRequestHeaders.Add("Accept", "application/json");
+                _client.DefaultRequestHeaders.Add("Log-Type", LogName);
+                _client.DefaultRequestHeaders.Add("Authorization", signature);
+                _client.DefaultRequestHeaders.Add("x-ms-date", date);
+                _client.DefaultRequestHeaders.Add("time-generated-field", "");
 
                 System.Net.Http.HttpContent httpContent = new StringContent(json, Encoding.UTF8);
                 httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                Task<System.Net.Http.HttpResponseMessage> response = client.PostAsync(new Uri(url), httpContent);
+                Task<System.Net.Http.HttpResponseMessage> response = _client.PostAsync(new Uri(url), httpContent);
 
                 System.Net.Http.HttpContent responseContent = response.Result.Content;
                 //string result = responseContent.ReadAsStringAsync().Result;
