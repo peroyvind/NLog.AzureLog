@@ -13,6 +13,7 @@ namespace NLog.AzureLog
     [Target("Azure")]
     public sealed class Azure: TargetWithLayout
     {
+        private static TaskQueue _taskQueue = new TaskQueue(2, 10000);
         [RequiredParameter]
         public string CustomerId { get; set; }
         public string SharedKey { get; set; }
@@ -29,9 +30,13 @@ namespace NLog.AzureLog
             string hashedString = BuildSignature(stringToHash, this.SharedKey);
             string signature = "SharedKey " + this.CustomerId + ":" + hashedString;
 
-            PostData(signature, datestring, logMessage);
 
+            if (_taskQueue.Queue(() => PostData(signature, datestring, logMessage)))
+            {
+                _taskQueue.ProcessBackground();
+            }
 
+            InternalLogger.Warn("Azurelog queue size= " + _taskQueue.GetRunningCount().ToString());
         }
 
         public string BuildSignature(string message, string secret)
@@ -45,8 +50,7 @@ namespace NLog.AzureLog
                 return Convert.ToBase64String(hash);
             }
         }
-
-        public void PostData(string signature, string date, string json)
+        public async Task PostData(string signature, string date, string json)
         {
             try
             {
@@ -61,11 +65,14 @@ namespace NLog.AzureLog
 
                 System.Net.Http.HttpContent httpContent = new StringContent(json, Encoding.UTF8);
                 httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                Task<System.Net.Http.HttpResponseMessage> response = client.PostAsync(new Uri(url), httpContent);
+                System.Net.Http.HttpResponseMessage response = await client.PostAsync(new Uri(url), httpContent);
 
-                System.Net.Http.HttpContent responseContent = response.Result.Content;
+                //System.Net.Http.HttpContent responseContent = response.Content;
                 //string result = responseContent.ReadAsStringAsync().Result;
-                //Console.WriteLine("Return Result: " + result);
+                if(response != null && response.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    InternalLogger.Error("API Post Failed status: " + response.StatusCode.ToString());
+                }
             }
             catch (Exception excep)
             {
