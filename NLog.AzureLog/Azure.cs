@@ -36,7 +36,6 @@ namespace NLog.AzureLog
                 _taskQueue.ProcessBackground();
             }
 
-            InternalLogger.Warn("Azurelog queue size= " + _taskQueue.GetRunningCount().ToString());
         }
 
         public string BuildSignature(string message, string secret)
