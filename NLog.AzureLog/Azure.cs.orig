@@ -13,6 +13,7 @@ namespace NLog.AzureLog
     [Target("Azure")]
     public sealed class Azure : TargetWithLayout
     {
+<<<<<<< HEAD
         private static HttpClient _client;
 
         public Azure()
@@ -21,7 +22,9 @@ namespace NLog.AzureLog
                 _client = new System.Net.Http.HttpClient();
         }
 
+=======
         private static TaskQueue _taskQueue = new TaskQueue(2, 10000);
+>>>>>>> 6328d1721c073f3ddcd47058eca316f37af47133
         [RequiredParameter]
         public string CustomerId { get; set; }
         public string SharedKey { get; set; }
@@ -72,7 +75,11 @@ namespace NLog.AzureLog
 
                 System.Net.Http.HttpContent httpContent = new StringContent(json, Encoding.UTF8);
                 httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                System.Net.Http.HttpResponseMessage response = await _client.PostAsync(new Uri(url), httpContent);
+<<<<<<< HEAD
+                Task<System.Net.Http.HttpResponseMessage> response = _client.PostAsync(new Uri(url), httpContent);
+=======
+                System.Net.Http.HttpResponseMessage response = await client.PostAsync(new Uri(url), httpContent);
+>>>>>>> 6328d1721c073f3ddcd47058eca316f37af47133
 
                 //System.Net.Http.HttpContent responseContent = response.Content;
                 //string result = responseContent.ReadAsStringAsync().Result;
